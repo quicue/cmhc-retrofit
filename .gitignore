@@ -1,0 +1,5 @@
+# Generated JSON (built from CUE by build.sh)
+*.json
+
+# CUE local dependency resolution (symlinks to ~/quicue.ca)
+cue.mod/pkg/

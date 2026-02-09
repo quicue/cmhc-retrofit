@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>CJLQ — CMHC Infrastructure Graph Explorer</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;1,400&family=Atkinson+Hyperlegible+Mono:wght@400;700&display=swap');
+:root {
+  --bg: #0d1117; --surface: #161b22; --elevated: #21262d; --border: #30363d;
+  --text: #e6edf3; --text-sec: #8b949e; --text-dim: #6e7681;
+  --accent: #58a6ff; --green: #3fb950; --red: #f85149; --warning: #d29922; --purple: #a371f7;
+  --font-ui: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --font-mono: 'Atkinson Hyperlegible Mono', monospace;
+  --radius: 8px;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-ui); background: var(--bg); color: var(--text); line-height: 1.5; overflow: hidden; height: 100vh; display: flex; flex-direction: column; -webkit-tap-highlight-color: transparent; }
+
+/* ─── Header ─── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 48px;
+}
+header h1 { font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+.graph-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+.graph-tab {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-sec);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.graph-tab:hover { background: var(--elevated); color: var(--text); }
+.graph-tab.active { background: var(--elevated); color: var(--accent); border-color: var(--accent); font-weight: 700; }
+
+/* ─── Toolbar ─── */
+.toolbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.toolbar label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.layer-btn {
+  min-width: 28px; height: 24px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  transition: opacity 0.15s;
+  padding: 0 0.3rem;
+}
+.layer-btn.off { opacity: 0.25; }
+.sep { width: 1px; height: 20px; background: var(--border); margin: 0 0.15rem; }
+.layout-btn {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-sec);
+  font-size: 0.75rem;
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+.layout-btn.active { background: var(--elevated); color: var(--accent); border-color: var(--accent); }
+.reset-btn {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-sec);
+  font-size: 0.75rem;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  margin-left: auto;
+}
+.reset-btn:hover { background: var(--elevated); color: var(--text); }
+
+/* ─── Main area ─── */
+.main { flex: 1; position: relative; overflow: hidden; }
+svg { width: 100%; height: 100%; display: block; }
+.loading {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-sec); font-size: 0.9rem;
+}
+
+/* ─── Tooltip (desktop hover) ─── */
+.tooltip {
+  position: fixed;
+  padding: 0.5rem 0.75rem;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s;
+  max-width: 320px;
+  z-index: 100;
+}
+.tooltip.visible { opacity: 1; }
+.tt-name { font-weight: 700; font-family: var(--font-mono); font-size: 0.85rem; }
+.tt-types { color: var(--text-sec); font-size: 0.75rem; margin-top: 0.15rem; }
+.tt-desc { color: var(--text-sec); font-size: 0.75rem; margin-top: 0.3rem; }
+
+/* ─── Detail panel — bottom sheet on mobile, side panel on desktop ─── */
+.detail-panel {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transition: transform 0.25s ease;
+  z-index: 50;
+}
+/* Desktop: right side panel */
+@media (min-width: 768px) {
+  .detail-panel {
+    top: 0; right: 0; bottom: 0;
+    width: 340px;
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+  }
+  .detail-panel.open { transform: translateX(0); }
+}
+/* Mobile: bottom sheet */
+@media (max-width: 767px) {
+  .detail-panel {
+    left: 0; right: 0; bottom: 0;
+    max-height: 55vh;
+    border-top: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+    transform: translateY(100%);
+  }
+  .detail-panel.open { transform: translateY(0); }
+}
+.panel-close {
+  position: sticky; top: 0; right: 0;
+  float: right;
+  width: 32px; height: 32px;
+  border: none;
+  background: var(--elevated);
+  border-radius: 50%;
+  color: var(--text-sec);
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin: 0.5rem;
+  z-index: 51;
+}
+.panel-close:hover { color: var(--text); }
+.detail-inner { padding: 0.75rem 1rem 1.5rem; }
+.detail-inner h2 { font-family: var(--font-mono); font-size: 1rem; margin-bottom: 0.5rem; word-break: break-all; }
+.detail-section { margin-bottom: 0.75rem; }
+.detail-section h3 {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--text-dim); margin-bottom: 0.3rem;
+}
+.detail-meta { font-size: 0.8rem; color: var(--text-sec); margin-bottom: 0.15rem; }
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--text-sec);
+  margin: 0.1rem;
+}
+.badge-layer { color: #fff; border: none; }
+.dep-link {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  cursor: pointer;
+  margin: 0.1rem;
+}
+.dep-link:hover { background: var(--border); }
+.impact-box {
+  padding: 0.5rem 0.75rem;
+  background: rgba(248,81,73,0.08);
+  border: 1px solid rgba(248,81,73,0.25);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+}
+
+/* ─── Graph info overlay ─── */
+.graph-info {
+  position: absolute;
+  bottom: 0.5rem; left: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(22,27,34,0.85);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.7rem;
+  color: var(--text-sec);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ─── Mobile drag handle ─── */
+@media (max-width: 767px) {
+  .detail-panel::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 8px auto 4px;
+  }
+}
+
+/* Scrollbar */
+.detail-panel::-webkit-scrollbar { width: 6px; }
+.detail-panel::-webkit-scrollbar-track { background: transparent; }
+.detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CJLQ</h1>
+  <div class="graph-tabs">
+    <button class="graph-tab active" data-graph="nhcf">NHCF Retrofit</button>
+    <button class="graph-tab" data-graph="greener-homes">Greener Homes</button>
+  </div>
+</header>
+
+<div class="toolbar" id="toolbar"></div>
+
+<div class="main" id="main">
+  <div class="loading" id="loading">Loading graph data...</div>
+  <svg id="graph-svg"></svg>
+  <div class="graph-info" id="graph-info"></div>
+  <div class="detail-panel" id="detail-panel">
+    <button class="panel-close" id="panel-close" title="Close">&times;</button>
+    <div class="detail-inner" id="detail-content"></div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// CJLQ Graph Explorer
+// Data rendered via DOM construction — no innerHTML. Text values from local JSON only.
+(async function() {
+
+  const LAYER_COLORS = [
+    '#f85149', '#d29922', '#3fb950', '#58a6ff',
+    '#a371f7', '#f0883e', '#db61a2', '#79c0ff'
+  ];
+
+  const GRAPH_META = {
+    nhcf: {
+      title: 'NHCF Deep Retrofit',
+      subtitle: 'Ottawa Community Housing — 4 buildings, 270 units',
+      file: 'nhcf.json',
+      nodeLabel: 'work package',
+      detailFields: ['owner', 'discipline', 'duration_weeks', 'building']
+    },
+    'greener-homes': {
+      title: 'Greener Homes Platform',
+      subtitle: 'Ontario Regional Processing — 17 services',
+      file: 'greener-homes.json',
+      nodeLabel: 'service',
+      detailFields: ['ip', 'host', 'fqdn']
+    }
+  };
+
+  // ─── State ───
+  let currentGraph = 'nhcf';
+  let graphData = {};
+  let simulation = null;
+  let selectedNode = null;
+  let currentLayout = 'layered';
+  let layerVisibility = [];
+
+  // ─── DOM refs ───
+  const svgEl = document.getElementById('graph-svg');
+  const svg = d3.select(svgEl);
+  const mainEl = document.getElementById('main');
+  const toolbarEl = document.getElementById('toolbar');
+  const panelEl = document.getElementById('detail-panel');
+  const detailContent = document.getElementById('detail-content');
+  const tooltip = document.getElementById('tooltip');
+  const graphInfo = document.getElementById('graph-info');
+
+  // ─── Parse URL hash ───
+  function parseHash() {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return { graph: 'nhcf', node: null };
+    const parts = hash.split('/');
+    const graph = GRAPH_META[parts[0]] ? parts[0] : 'nhcf';
+    const node = parts[1] || null;
+    return { graph, node };
+  }
+
+  function updateHash(graph, node) {
+    const h = node ? `${graph}/${node}` : graph;
+    history.replaceState(null, '', '#' + h);
+  }
+
+  // ─── Load graph data ───
+  // JSON is pre-computed by #VizData (quicue.ca pattern):
+  //   { data: { nodes, edges, topology, criticality, spof, coupling, byType, metrics, validation },
+  //     resources: { name: { @type, description, depends_on, ...domain fields } } }
+  async function loadGraph(name) {
+    if (graphData[name]) return graphData[name];
+    const meta = GRAPH_META[name];
+    const raw = await fetch(meta.file).then(r => r.json());
+
+    const vizData = raw.data;
+    const resources = raw.resources;
+
+    const maxLayer = vizData.metrics.maxDepth;
+
+    // Layer map from pre-computed nodes
+    const layerMap = {};
+    for (const n of vizData.nodes) layerMap[n.id] = n.depth;
+
+    // Direct dependents from pre-computed edges (reverse lookup)
+    const directDependents = {};
+    for (const e of vizData.edges) {
+      (directDependents[e.source] ??= []).push(e.target);
+    }
+
+    // Nodes: VizData structure enriched with resource reference for detail panel
+    const nodes = vizData.nodes.map(n => ({
+      id: n.id,
+      layer: n.depth,
+      resource: resources[n.id],
+      ancestors: n.ancestors || []
+    }));
+
+    // Links from pre-computed edges
+    const links = vizData.edges.map(e => ({ source: e.source, target: e.target }));
+
+    // Topology already arrays (not struct-as-set)
+    const topology = vizData.topology;
+
+    graphData[name] = { resources, topology, layerMap, maxLayer, directDependents, nodes, links, vizData };
+    return graphData[name];
+  }
+
+  // ─── Impact (pre-computed ancestors) ───
+  // Uses #InfraGraph._ancestors computed in CUE — no BFS needed.
+  // If target X is in node's ancestors, that node is transitively affected.
+  function getImpact(data, name) {
+    const visited = new Set();
+    for (const n of data.nodes) {
+      if (n.ancestors && n.ancestors.includes(name)) {
+        visited.add(n.id);
+      }
+    }
+    return visited;
+  }
+
+  // ─── Render toolbar ───
+  function renderToolbar(data) {
+    toolbarEl.textContent = '';
+
+    const lbl = document.createElement('label');
+    lbl.textContent = 'Layers';
+    toolbarEl.appendChild(lbl);
+
+    layerVisibility = new Array(data.maxLayer + 1).fill(true);
+
+    for (let i = 0; i <= data.maxLayer; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'layer-btn';
+      btn.dataset.layer = i;
+      btn.style.background = LAYER_COLORS[i % LAYER_COLORS.length];
+      btn.textContent = 'L' + i;
+      btn.addEventListener('click', () => {
+        layerVisibility[i] = !layerVisibility[i];
+        btn.classList.toggle('off', !layerVisibility[i]);
+        applyLayerFilter();
+      });
+      toolbarEl.appendChild(btn);
+    }
+
+    const sep1 = document.createElement('div');
+    sep1.className = 'sep';
+    toolbarEl.appendChild(sep1);
+
+    const layoutLbl = document.createElement('label');
+    layoutLbl.textContent = 'Layout';
+    toolbarEl.appendChild(layoutLbl);
+
+    for (const layout of ['layered', 'force']) {
+      const btn = document.createElement('button');
+      btn.className = 'layout-btn' + (layout === currentLayout ? ' active' : '');
+      btn.textContent = layout.charAt(0).toUpperCase() + layout.slice(1);
+      btn.addEventListener('click', () => {
+        currentLayout = layout;
+        toolbarEl.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyLayout();
+      });
+      toolbarEl.appendChild(btn);
+    }
+
+    const sep2 = document.createElement('div');
+    sep2.className = 'sep';
+    toolbarEl.appendChild(sep2);
+
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'reset-btn';
+    resetBtn.textContent = 'Reset';
+    resetBtn.addEventListener('click', () => {
+      svg.transition().duration(300).call(zoomBehavior.transform, d3.zoomIdentity);
+    });
+    toolbarEl.appendChild(resetBtn);
+  }
+
+  // ─── Graph info ───
+  function updateGraphInfo(data) {
+    const meta = GRAPH_META[currentGraph];
+    graphInfo.textContent = `${data.nodes.length} ${meta.nodeLabel}s \u00B7 ${data.links.length} edges \u00B7 ${data.maxLayer + 1} layers`;
+  }
+
+  // ─── Main rendering ───
+  let nodeSelection, linkSelection, g, zoomBehavior;
+  let currentData = null;
+
+  async function renderGraph(graphName, focusNode) {
+    currentGraph = graphName;
+    selectedNode = null;
+
+    // Update tab UI
+    document.querySelectorAll('.graph-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.graph === graphName);
+    });
+
+    // Close panel
+    panelEl.classList.remove('open');
+
+    // Clear SVG
+    svg.selectAll('*').remove();
+
+    // Load data
+    const data = await loadGraph(graphName);
+    currentData = data;
+
+    document.getElementById('loading')?.remove();
+    renderToolbar(data);
+    updateGraphInfo(data);
+
+    // Deep clone nodes/links for D3 (D3 mutates them)
+    const nodes = data.nodes.map(n => ({ ...n }));
+    const links = data.links.map(l => ({ source: l.source, target: l.target }));
+
+    const width = mainEl.clientWidth;
+    const height = mainEl.clientHeight;
+
+    // Defs: arrow markers
+    const defs = svg.append('defs');
+    for (const [id, color] of [['arrow', '#6e7681'], ['arrow-hl', '#58a6ff']]) {
+      defs.append('marker')
+        .attr('id', id)
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 10).attr('refY', 0)
+        .attr('markerWidth', 6).attr('markerHeight', 6)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-4L10,0L0,4')
+        .attr('fill', color);
+    }
+
+    // Zoom
+    g = svg.append('g');
+    zoomBehavior = d3.zoom()
+      .scaleExtent([0.2, 5])
+      .on('zoom', (event) => g.attr('transform', event.transform));
+    svg.call(zoomBehavior);
+
+    // Links
+    linkSelection = g.append('g').selectAll('line')
+      .data(links).join('line')
+      .attr('stroke', '#6e7681')
+      .attr('stroke-width', 1)
+      .attr('stroke-opacity', 0.4)
+      .attr('marker-end', 'url(#arrow)');
+
+    // Nodes
+    const nodeRadius = Math.max(6, Math.min(12, 200 / nodes.length));
+
+    nodeSelection = g.append('g').selectAll('g')
+      .data(nodes).join('g')
+      .style('cursor', 'pointer')
+      .call(d3.drag()
+        .on('start', (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x; d.fy = d.y;
+        })
+        .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+        .on('end', (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          if (currentLayout === 'force') { d.fx = null; d.fy = null; }
+        })
+      );
+
+    nodeSelection.append('circle')
+      .attr('r', nodeRadius)
+      .attr('fill', d => LAYER_COLORS[d.layer % LAYER_COLORS.length])
+      .attr('stroke', 'transparent')
+      .attr('stroke-width', 2.5);
+
+    nodeSelection.append('text')
+      .text(d => d.id)
+      .attr('dy', nodeRadius + 12)
+      .attr('text-anchor', 'middle')
+      .attr('font-family', "'Atkinson Hyperlegible Mono', monospace")
+      .attr('font-size', Math.max(7, Math.min(9, 150 / nodes.length)) + 'px')
+      .attr('fill', '#8b949e')
+      .attr('pointer-events', 'none');
+
+    // Simulation
+    if (simulation) simulation.stop();
+
+    simulation = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(links).id(d => d.id).distance(70).strength(0.6))
+      .force('charge', d3.forceManyBody().strength(-250))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(nodeRadius + 6))
+      .on('tick', () => {
+        linkSelection.each(function(d) {
+          const dx = d.target.x - d.source.x;
+          const dy = d.target.y - d.source.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const ox = (dx / dist) * nodeRadius;
+          const oy = (dy / dist) * nodeRadius;
+          d3.select(this)
+            .attr('x1', d.source.x).attr('y1', d.source.y)
+            .attr('x2', d.target.x - ox).attr('y2', d.target.y - oy);
+        });
+        nodeSelection.attr('transform', d => `translate(${d.x},${d.y})`);
+      });
+
+    // Apply layout
+    applyLayout(width, height, nodes);
+
+    // Events
+    nodeSelection.on('mouseenter', (event, d) => {
+      const r = d.resource;
+      const types = Object.keys(r['@type'] || {}).join(', ');
+      tooltip.textContent = '';
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'tt-name';
+      nameDiv.textContent = d.id;
+      tooltip.appendChild(nameDiv);
+      if (types) {
+        const t = document.createElement('div');
+        t.className = 'tt-types';
+        t.textContent = types;
+        tooltip.appendChild(t);
+      }
+      if (r.description) {
+        const desc = document.createElement('div');
+        desc.className = 'tt-desc';
+        desc.textContent = r.description;
+        tooltip.appendChild(desc);
+      }
+      tooltip.classList.add('visible');
+      d3.select(event.currentTarget).select('circle')
+        .transition().duration(100).attr('r', nodeRadius * 1.3);
+    })
+    .on('mousemove', (event) => {
+      tooltip.style.left = (event.clientX + 14) + 'px';
+      tooltip.style.top = (event.clientY - 10) + 'px';
+    })
+    .on('mouseleave', (event) => {
+      tooltip.classList.remove('visible');
+      d3.select(event.currentTarget).select('circle')
+        .transition().duration(100).attr('r', nodeRadius);
+    });
+
+    nodeSelection.on('click', (event, d) => {
+      event.stopPropagation();
+      selectNodeFn(d, data, nodeRadius);
+    });
+
+    // Touch: long-press shows tooltip, tap selects
+    nodeSelection.on('touchstart', (event, d) => {
+      event.preventDefault();
+      selectNodeFn(d, data, nodeRadius);
+    });
+
+    svg.on('click', () => deselectNodeFn(nodeRadius));
+
+    // Focus node from URL hash
+    if (focusNode) {
+      // Wait for simulation to settle a bit
+      setTimeout(() => {
+        const node = nodes.find(n => n.id === focusNode);
+        if (node) {
+          selectNodeFn(node, data, nodeRadius);
+          navigateToNodeFn(node);
+        }
+      }, 600);
+    }
+  }
+
+  // ─── Layout: layered vs force ───
+  function applyLayout(w, h, nodes) {
+    w = w || mainEl.clientWidth;
+    h = h || mainEl.clientHeight;
+    nodes = nodes || (simulation ? simulation.nodes() : []);
+    if (!simulation || !currentData) return;
+
+    if (currentLayout === 'layered') {
+      const maxL = currentData.maxLayer;
+      const layerHeight = h / (maxL + 2);
+      // Count nodes per layer for horizontal spacing
+      const layerCounts = {};
+      for (const n of nodes) {
+        layerCounts[n.layer] = (layerCounts[n.layer] || 0) + 1;
+      }
+      const layerIdx = {};
+      for (const n of nodes) {
+        layerIdx[n.layer] = (layerIdx[n.layer] || 0);
+        const count = layerCounts[n.layer];
+        const xSpacing = w / (count + 1);
+        n.fx = xSpacing * (layerIdx[n.layer] + 1);
+        n.fy = layerHeight * (n.layer + 1);
+        layerIdx[n.layer]++;
+      }
+      simulation.alpha(0.3).restart();
+    } else {
+      // Force: release fixed positions
+      for (const n of nodes) {
+        n.fx = null;
+        n.fy = null;
+      }
+      simulation.alpha(0.8).restart();
+    }
+  }
+
+  // ─── Layer filter ───
+  function applyLayerFilter() {
+    if (!nodeSelection || !linkSelection) return;
+    nodeSelection.transition().duration(200)
+      .style('opacity', d => layerVisibility[d.layer] ? 1 : 0.08);
+    linkSelection.transition().duration(200)
+      .attr('stroke-opacity', d => {
+        const sl = typeof d.source === 'object' ? d.source.layer : 0;
+        const tl = typeof d.target === 'object' ? d.target.layer : 0;
+        return (layerVisibility[sl] && layerVisibility[tl]) ? 0.4 : 0.03;
+      });
+  }
+
+  // ─── Node selection ───
+  function selectNodeFn(d, data, nodeRadius) {
+    selectedNode = d.id;
+    updateHash(currentGraph, d.id);
+
+    const deps = new Set(Object.keys(d.resource.depends_on || {}));
+    const depnts = new Set(data.directDependents[d.id] || []);
+    const connected = new Set([d.id, ...deps, ...depnts]);
+
+    nodeSelection.transition().duration(200)
+      .style('opacity', n => connected.has(n.id) ? 1 : 0.12);
+
+    linkSelection.transition().duration(200)
+      .attr('stroke-opacity', l => {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        return (sid === d.id || tid === d.id) ? 0.9 : 0.04;
+      })
+      .attr('stroke-width', l => {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        return (sid === d.id || tid === d.id) ? 2.5 : 1;
+      })
+      .attr('stroke', l => {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        return (sid === d.id || tid === d.id) ? '#58a6ff' : '#6e7681';
+      })
+      .attr('marker-end', l => {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        return (sid === d.id || tid === d.id) ? 'url(#arrow-hl)' : 'url(#arrow)';
+      });
+
+    nodeSelection.select('circle')
+      .attr('stroke', n => n.id === d.id ? '#58a6ff' : 'transparent');
+
+    showDetail(d, data, nodeRadius);
+  }
+
+  function deselectNodeFn(nodeRadius) {
+    if (!selectedNode) return;
+    selectedNode = null;
+    updateHash(currentGraph, null);
+
+    nodeSelection.transition().duration(200).style('opacity', 1);
+    nodeSelection.select('circle').attr('stroke', 'transparent');
+
+    linkSelection.transition().duration(200)
+      .attr('stroke-opacity', 0.4)
+      .attr('stroke-width', 1)
+      .attr('stroke', '#6e7681')
+      .attr('marker-end', 'url(#arrow)');
+
+    panelEl.classList.remove('open');
+  }
+
+  function navigateToNodeFn(node) {
+    const transform = d3.zoomTransform(svgEl);
+    const w = mainEl.clientWidth;
+    const h = mainEl.clientHeight;
+    const tx = w / 2 - node.x * transform.k;
+    const ty = h / 2 - node.y * transform.k;
+    svg.transition().duration(400)
+      .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(transform.k));
+  }
+
+  // ─── Detail panel ───
+  function showDetail(d, data, nodeRadius) {
+    const r = d.resource;
+    const types = Object.keys(r['@type'] || {});
+    const deps = Object.keys(r.depends_on || {});
+    const depnts = data.directDependents[d.id] || [];
+    const impact = getImpact(data, d.id);
+    const meta = GRAPH_META[currentGraph];
+
+    detailContent.textContent = '';
+
+    // Title
+    const h2 = document.createElement('h2');
+    h2.textContent = d.id;
+    detailContent.appendChild(h2);
+
+    // Description
+    if (r.description) {
+      const p = document.createElement('p');
+      p.className = 'detail-meta';
+      p.textContent = r.description;
+      p.style.marginBottom = '0.5rem';
+      detailContent.appendChild(p);
+    }
+
+    // Types
+    const typesSection = makeSection('Types');
+    for (const t of types) {
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = t;
+      typesSection.appendChild(badge);
+    }
+    // Layer badge
+    const layerBadge = document.createElement('span');
+    layerBadge.className = 'badge badge-layer';
+    layerBadge.style.background = LAYER_COLORS[d.layer % LAYER_COLORS.length];
+    layerBadge.textContent = 'Layer ' + d.layer;
+    typesSection.appendChild(layerBadge);
+    detailContent.appendChild(typesSection);
+
+    // Domain-specific fields
+    const fieldsSection = makeSection('Details');
+    let hasFields = false;
+    for (const field of meta.detailFields) {
+      if (r[field] !== undefined) {
+        hasFields = true;
+        const p = document.createElement('p');
+        p.className = 'detail-meta';
+        const label = field.replace(/_/g, ' ');
+        p.textContent = label + ': ' + r[field];
+        fieldsSection.appendChild(p);
+      }
+    }
+    if (hasFields) detailContent.appendChild(fieldsSection);
+
+    // Dependencies
+    const depsSection = makeSection('Dependencies (' + deps.length + ')');
+    if (deps.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'detail-meta';
+      p.style.fontStyle = 'italic';
+      p.textContent = 'None (root ' + meta.nodeLabel + ')';
+      depsSection.appendChild(p);
+    } else {
+      for (const name of deps) {
+        depsSection.appendChild(makeDepLink(name, data, nodeRadius));
+      }
+    }
+    detailContent.appendChild(depsSection);
+
+    // Dependents
+    const depntsSection = makeSection('Dependents (' + depnts.length + ')');
+    if (depnts.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'detail-meta';
+      p.style.fontStyle = 'italic';
+      p.textContent = 'None (leaf ' + meta.nodeLabel + ')';
+      depntsSection.appendChild(p);
+    } else {
+      for (const name of depnts) {
+        depntsSection.appendChild(makeDepLink(name, data, nodeRadius));
+      }
+    }
+    detailContent.appendChild(depntsSection);
+
+    // Impact
+    const impactSection = makeSection(null);
+    const impactBox = document.createElement('div');
+    impactBox.className = 'impact-box';
+    impactBox.textContent = 'If ';
+    const impactName = document.createElement('strong');
+    impactName.textContent = d.id;
+    impactBox.appendChild(impactName);
+    impactBox.appendChild(document.createTextNode(' fails, '));
+    const impactCount = document.createElement('strong');
+    impactCount.textContent = impact.size;
+    impactBox.appendChild(impactCount);
+    impactBox.appendChild(document.createTextNode(
+      ' ' + meta.nodeLabel + (impact.size === 1 ? ' is' : 's are') + ' affected'
+    ));
+    impactSection.appendChild(impactBox);
+    detailContent.appendChild(impactSection);
+
+    panelEl.classList.add('open');
+  }
+
+  function makeSection(title) {
+    const section = document.createElement('div');
+    section.className = 'detail-section';
+    if (title) {
+      const h3 = document.createElement('h3');
+      h3.textContent = title;
+      section.appendChild(h3);
+    }
+    return section;
+  }
+
+  function makeDepLink(name, data, nodeRadius) {
+    const span = document.createElement('span');
+    span.className = 'dep-link';
+    span.textContent = name;
+    span.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const node = simulation.nodes().find(n => n.id === name);
+      if (node) {
+        selectNodeFn(node, data, nodeRadius);
+        navigateToNodeFn(node);
+      }
+    });
+    return span;
+  }
+
+  // ─── Panel close ───
+  document.getElementById('panel-close').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const nodeRadius = currentData ? Math.max(6, Math.min(12, 200 / currentData.nodes.length)) : 10;
+    deselectNodeFn(nodeRadius);
+  });
+
+  // ─── Tab switching ───
+  document.querySelectorAll('.graph-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const graphName = tab.dataset.graph;
+      if (graphName !== currentGraph) {
+        updateHash(graphName, null);
+        renderGraph(graphName, null);
+      }
+    });
+  });
+
+  // ─── Handle browser back/forward ───
+  window.addEventListener('hashchange', () => {
+    const { graph, node } = parseHash();
+    if (graph !== currentGraph) {
+      renderGraph(graph, node);
+    } else if (node && node !== selectedNode) {
+      const nd = simulation?.nodes().find(n => n.id === node);
+      if (nd && currentData) {
+        const nodeRadius = Math.max(6, Math.min(12, 200 / currentData.nodes.length));
+        selectNodeFn(nd, currentData, nodeRadius);
+        navigateToNodeFn(nd);
+      }
+    }
+  });
+
+  // ─── Resize handler ───
+  new ResizeObserver(() => {
+    if (simulation && currentData) {
+      applyLayout();
+    }
+  }).observe(mainEl);
+
+  // ─── Initial load ───
+  const { graph, node } = parseHash();
+  renderGraph(graph, node);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Typed Dependency Graphs for CMHC Program Delivery</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;1,400&family=Atkinson+Hyperlegible+Mono:wght@400;700&display=swap');
+:root {
+  --bg: #fafbfc; --surface: #ffffff; --border: #d0d7de; --border-light: #e8ecf0;
+  --text: #1f2328; --text-sec: #656d76; --text-dim: #8b949e;
+  --accent: #0969da; --green: #1a7f37; --red: #cf222e; --warning: #9a6700; --purple: #8250df;
+  --font-ui: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --font-mono: 'Atkinson Hyperlegible Mono', monospace;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 16px; }
+body {
+  font-family: var(--font-ui); background: var(--bg); color: var(--text);
+  line-height: 1.65; max-width: 52rem; margin: 0 auto; padding: 2rem 1.25rem 4rem;
+}
+h1 { font-size: 1.6rem; line-height: 1.25; margin-bottom: 0.25rem; }
+h2 { font-size: 1.25rem; margin-top: 2.5rem; margin-bottom: 0.75rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border-light); }
+h3 { font-size: 1.05rem; margin-top: 1.75rem; margin-bottom: 0.5rem; }
+h4 { font-size: 0.95rem; margin-top: 1.25rem; margin-bottom: 0.35rem; color: var(--text); }
+p { margin-bottom: 0.75rem; }
+ul, ol { margin-bottom: 0.75rem; padding-left: 1.5rem; }
+li { margin-bottom: 0.3rem; }
+strong { font-weight: 700; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+hr { border: none; border-top: 1px solid var(--border-light); margin: 2rem 0; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: #f0f3f6; padding: 0.15em 0.35em; border-radius: 4px; }
+.meta { color: var(--text-sec); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; }
+.meta strong { color: var(--text); }
+.callout {
+  background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 6px; padding: 0.85rem 1rem; margin: 1rem 0; font-size: 0.92rem;
+}
+.callout-green { border-left-color: var(--green); }
+.callout-warn { border-left-color: var(--warning); }
+.cta {
+  display: inline-block; background: var(--accent); color: #fff; padding: 0.6rem 1.25rem;
+  border-radius: 6px; font-weight: 700; font-size: 0.95rem; margin: 0.5rem 0;
+  transition: opacity 0.15s;
+}
+.cta:hover { opacity: 0.88; text-decoration: none; }
+
+/* Responsive tables */
+.table-wrap { overflow-x: auto; margin: 0.75rem 0 1rem; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { padding: 0.45rem 0.65rem; text-align: left; border: 1px solid var(--border-light); }
+th { background: #f6f8fa; font-weight: 700; white-space: nowrap; }
+td { vertical-align: top; }
+tr:nth-child(even) { background: #f9fafb; }
+
+/* Phase table — narrower columns */
+.phase-table td:first-child, .phase-table th:first-child { white-space: nowrap; width: 4rem; }
+.phase-table td:nth-child(2), .phase-table th:nth-child(2) { white-space: nowrap; width: 7rem; }
+
+/* Comparison table */
+.compare-table td:first-child { font-weight: 600; min-width: 10rem; }
+.compare-table .yes { color: var(--green); font-weight: 600; }
+.compare-table .partial { color: var(--warning); font-weight: 600; }
+.compare-table .no { color: var(--text-dim); }
+
+/* Print */
+@media print {
+  body { max-width: none; padding: 0; font-size: 11pt; }
+  .cta { background: var(--accent); -webkit-print-color-adjust: exact; }
+  .table-wrap { overflow: visible; }
+}
+
+/* Small screens */
+@media (max-width: 600px) {
+  body { padding: 1rem 0.75rem 3rem; }
+  h1 { font-size: 1.35rem; }
+  table { font-size: 0.82rem; }
+  th, td { padding: 0.35rem 0.45rem; }
+}
+</style>
+</head>
+<body>
+
+<h1>Typed Dependency Graphs for CMHC Program Delivery</h1>
+<div class="meta">
+  <strong>From:</strong> quicue.ca demonstration project<br>
+  <strong>Date:</strong> February 2026
+</div>
+
+<a class="cta" href="https://rfam.cc/cjlq/">Open the Interactive Explorer &rarr;</a>
+
+<hr>
+
+<h2>What You're Looking At</h2>
+
+<p>This system models CMHC program delivery as a <strong>typed dependency graph</strong> &mdash; every work package, service, or milestone is a node, and every predecessor relationship is a directed edge. A graph engine computes schedule phases, impact propagation, compliance checks, and risk analysis automatically from the structure.</p>
+
+<p>Two scenarios demonstrate the approach using your domain:</p>
+
+<ol>
+  <li><strong>NHCF Deep Retrofit</strong> &mdash; a project delivery graph for a 4-building, 270-unit Ottawa Community Housing portfolio</li>
+  <li><strong>Greener Homes Platform</strong> &mdash; an infrastructure topology graph for the Ontario regional EnerGuide processing platform</li>
+</ol>
+
+<p>Same engine. Same patterns. Two fundamentally different shapes of work.</p>
+
+<hr>
+
+<h2>Scenario 1: NHCF Deep Retrofit</h2>
+
+<h3>The Portfolio</h3>
+
+<div class="table-wrap">
+<table>
+  <tr><th>Building</th><th>Archetype</th><th>Year</th><th>Units</th><th>Area (m&sup2;)</th><th>Baseline EUI</th><th>Target EUI</th><th>Reduction</th><th>Baseline GHG</th><th>Target GHG</th><th>Cost</th></tr>
+  <tr><td>Rideau Tower</td><td>12-storey concrete high-rise</td><td>1972</td><td>150</td><td>8,500</td><td>310 ekWh/m&sup2;/yr</td><td>120</td><td>61%</td><td>393 tCO2e/yr</td><td>89</td><td>$12.5M</td></tr>
+  <tr><td>Gladstone Walk-up</td><td>3-storey brick low-rise</td><td>1965</td><td>24</td><td>1,800</td><td>260</td><td>95</td><td>63%</td><td>70</td><td>15</td><td>$1.8M</td></tr>
+  <tr><td>Bayshore Townhomes</td><td>Row townhomes (18 &times; 2 blocks)</td><td>1978</td><td>36</td><td>3,600</td><td>200</td><td>75</td><td>62%</td><td>107</td><td>23</td><td>$3.2M</td></tr>
+  <tr><td>Vanier Mid-rise</td><td>6-storey concrete mid-rise</td><td>1968</td><td>60</td><td>4,200</td><td>280</td><td>105</td><td>62%</td><td>174</td><td>38</td><td>$5.5M</td></tr>
+  <tr><td><strong>Portfolio</strong></td><td></td><td></td><td><strong>270</strong></td><td><strong>18,100</strong></td><td></td><td></td><td></td><td><strong>744</strong></td><td><strong>165</strong></td><td><strong>$23.0M</strong></td></tr>
+</table>
+</div>
+
+<p><strong>Climate:</strong> Ottawa, Ontario &mdash; NECB Zone 6, 4,500 HDD (18&deg;C base), ASHRAE 99.6% design temp &minus;29&deg;C<br>
+<strong>Weather file:</strong> CWEC2020 Ottawa Intl Airport<br>
+<strong>Energy modelling:</strong> Part 3 buildings via eQUEST 3.65 (ASHRAE 90.1 App G), Part 9 via HOT2000 v11.10 (NRCan ERS)<br>
+<strong>Carbon factors:</strong> Natural gas 49.88 kgCO2e/GJ (NRCan), Ontario grid 74 gCO2e/kWh (IESO 2024 annual average)<br>
+<strong>Code reference:</strong> OBC SB-12 Zone 6 (2024), NECB 2020</p>
+
+<h3>The Graph: 18 Work Packages, 27 Dependencies, 8 Phases</h3>
+
+<p>The system decomposes the retrofit program into 18 work packages with explicit finish-to-start predecessors. It then <strong>computes</strong> (not manually assigns) the schedule phases:</p>
+
+<div class="table-wrap">
+<table class="phase-table">
+  <tr><th>Phase</th><th>Duration (max)</th><th>Work Packages</th><th>What's Happening</th></tr>
+  <tr><td>0</td><td>12 weeks</td><td>nhcf-agreement</td><td>CMHC contribution agreement, scope, budget, 20-year affordability covenant</td></tr>
+  <tr><td>1</td><td>6 weeks</td><td>consultant-procurement</td><td>Procure NRCan-licensed energy advisor (HOT2000 + eQUEST)</td></tr>
+  <tr><td>2</td><td>4 weeks</td><td>rideau-audit, gladstone-audit, bayshore-audit, vanier-audit</td><td>Energy audits run in parallel &mdash; blower door, IR thermography, calibrated models</td></tr>
+  <tr><td>3</td><td>10 weeks</td><td>portfolio-baseline, rideau-design, gladstone-design, bayshore-design, vanier-design</td><td>All designs and portfolio baseline in parallel; Rideau (10 wk) gates the phase</td></tr>
+  <tr><td>4</td><td>3 weeks</td><td>nhcf-design-review</td><td>CMHC design milestone &mdash; confirm &ge;25% EUI and &ge;25% GHG reduction</td></tr>
+  <tr><td>5</td><td>32 weeks</td><td>rideau-retrofit, gladstone-retrofit, bayshore-retrofit, vanier-retrofit</td><td>All construction in parallel; Rideau Tower (32 wk) is the long pole</td></tr>
+  <tr><td>6</td><td>8 weeks</td><td>commissioning</td><td>Portfolio-wide systems commissioning &mdash; ASHP/VRF, HRV balancing, controls</td></tr>
+  <tr><td>7</td><td>56 weeks</td><td>nhcf-closeout</td><td>12-month M&amp;V (IPMVP Option C), post-retrofit EnerGuide labels, final disbursement</td></tr>
+  <tr><td><strong>Total</strong></td><td><strong>131 weeks</strong></td><td></td><td><strong>~2.5 years, program inception to NHCF closeout</strong></td></tr>
+</table>
+</div>
+
+<p>The 131-week total is a CPM forward-pass estimate: the longest work package in each phase, summed. Within a phase, everything runs concurrently. The phase boundary is the gate &mdash; nothing in phase N+1 starts until phase N is complete.</p>
+
+<div class="callout">
+  <strong>Note:</strong> This is a simplified critical-path calculation &mdash; finish-to-start dependencies only, no resource leveling, no calendars, no lags. Primavera P6 or MS Project handles those details better. The value here is that the phasing is <em>derived from the dependency structure</em>, not manually maintained, and it's the same engine that powers the infrastructure analysis below.
+</div>
+
+<h3>What This Answers</h3>
+
+<h4>"Which work packages delay the most things if they slip?"</h4>
+
+<p>The graph computes downstream impact for every node:</p>
+
+<div class="table-wrap">
+<table>
+  <tr><th>Work Package</th><th>Downstream Affected</th><th>Owner</th><th>Phase</th></tr>
+  <tr><td>nhcf-agreement</td><td>17 (everything)</td><td>OCH Director of Asset Management</td><td>0</td></tr>
+  <tr><td>consultant-procurement</td><td>16</td><td>OCH Procurement</td><td>1</td></tr>
+  <tr><td>nhcf-design-review</td><td>6</td><td>CMHC Technical Reviewer</td><td>4</td></tr>
+  <tr><td>commissioning</td><td>1</td><td>Commissioning Agent</td><td>6</td></tr>
+</table>
+</div>
+
+<p>The NHCF agreement and consultant procurement are the two highest-leverage items &mdash; if either slips, the entire program slips. You already know this intuitively. The graph proves it structurally and quantifies it.</p>
+
+<h4>"Rideau Tower design is running 6 weeks late &mdash; what's affected?"</h4>
+
+<ul>
+  <li><strong>7 work packages affected:</strong> nhcf-design-review, all four construction packages, commissioning, nhcf-closeout</li>
+  <li><strong>Safe to continue</strong> (no impact from this delay): portfolio-baseline, gladstone-design, bayshore-design, vanier-design &mdash; these proceed independently</li>
+  <li><strong>Recommended recovery sequence:</strong> complete rideau-design first, then nhcf-design-review, then construction packages resume</li>
+</ul>
+
+<p>This is blast radius analysis. P6 can trace predecessors (Trace Logic), but it answers "how much float is consumed?" not "what is the full downstream failure set?" This query answers the second question structurally &mdash; no manual tracing required.</p>
+
+<h4>"Rideau Tower retrofit stalled &mdash; ASHP equipment delivery delayed 8 weeks. What's degraded?"</h4>
+
+<p>Health propagation through the graph:</p>
+
+<ul>
+  <li><strong>1 work package down:</strong> rideau-retrofit (ASHP delivery stalled)</li>
+  <li><strong>2 degraded</strong> (transitively affected): commissioning, nhcf-closeout</li>
+  <li><strong>15 healthy:</strong> everything upstream of the construction phase is unaffected</li>
+</ul>
+
+<div class="callout callout-warn">
+  Supply chain delays are the #1 schedule risk for deep retrofits. Cold-climate ASHP equipment has 12&ndash;16 week lead times. This query models what happens when equipment doesn't arrive &mdash; a concept borrowed from infrastructure monitoring (service health propagation), applied to project management.
+</div>
+
+<h4>"Does this portfolio meet NHCF minimum requirements?"</h4>
+
+<p>The system <strong>computes</strong> compliance, not asserts it. For each building:</p>
+
+<ul>
+  <li>EUI reduction: all buildings achieve 61&ndash;63% (minimum 25%) &#10003;</li>
+  <li>GHG reduction: all buildings achieve 77&ndash;78% (minimum 25%) &#10003;</li>
+</ul>
+
+<p>If someone edits a building's numbers and drops below 25%, the schema itself catches the violation. There is no <code>compliant: true</code> flag that someone could forget to update &mdash; the check is structural, evaluated automatically whenever the data changes.</p>
+
+<h4>"Is this program cost-effective?"</h4>
+
+<div class="table-wrap">
+<table>
+  <tr><th>Metric</th><th>Portfolio</th><th>Rideau Tower</th><th>Gladstone</th><th>Bayshore</th><th>Vanier</th></tr>
+  <tr><td>Cost/unit</td><td>$85,185</td><td>$83,333</td><td>$75,000</td><td>$88,889</td><td>$91,667</td></tr>
+  <tr><td>Cost/m&sup2;</td><td>$1,271</td><td>$1,471</td><td>$1,000</td><td>$889</td><td>$1,310</td></tr>
+  <tr><td>GHG avoided (tCO2e/yr)</td><td>579</td><td>304</td><td>55</td><td>84</td><td>136</td></tr>
+  <tr><td>Cost per tCO2e/yr avoided</td><td>$39,724</td><td>$41,118</td><td>$32,727</td><td>$38,095</td><td>$40,441</td></tr>
+</table>
+</div>
+
+<p>The cost per tCO2e/yr figures reflect <strong>annual</strong> emissions reductions. Over a 30-year measure life (standard for deep envelope retrofits), the portfolio cost is ~$1,324/tCO2e &mdash; well within range for social housing decarbonization. The annualized figures of $35,000&ndash;$45,000/tCO2e/yr align with current Canadian deep retrofit benchmarks.</p>
+
+<p>Gladstone (the walk-up) is the most cost-effective at $32,727/tCO2e/yr &mdash; small low-rise buildings with individual systems are cheaper to retrofit per tonne than towers.</p>
+
+<p>At the 2024 federal carbon price of $80/tCO2e, annual carbon value is $46,320/yr for the portfolio.</p>
+
+<h4>"What are the single points of failure?"</h4>
+
+<p>A SPOF is a work package where (a) other things depend on it, and (b) no peer of the same type exists at the same phase. The graph identifies 4:</p>
+
+<div class="table-wrap">
+<table>
+  <tr><th>SPOF</th><th>Phase</th><th>Risk</th><th>Mitigation</th></tr>
+  <tr><td>nhcf-agreement</td><td>0</td><td style="color:var(--red);font-weight:600">CRITICAL &mdash; 17 downstream</td><td>Dedicated resources, schedule buffer, CMHC escalation path</td></tr>
+  <tr><td>consultant-procurement</td><td>1</td><td style="color:var(--red);font-weight:600">CRITICAL &mdash; 16 downstream</td><td>Dedicated resources, backup supplier identified</td></tr>
+  <tr><td>nhcf-design-review</td><td>4</td><td style="color:var(--warning);font-weight:600">MEDIUM &mdash; 6 downstream</td><td>Monitor closely, maintain schedule float</td></tr>
+  <tr><td>commissioning</td><td>6</td><td>LOW &mdash; 1 downstream</td><td>Standard tracking</td></tr>
+</table>
+</div>
+
+<p>The single-consultant dependency is a real risk in social housing retrofits. If the energy advisor firm can't deliver, there's no parallel path &mdash; all four audits go through them. This is a concept from infrastructure reliability engineering (single points of failure analysis) applied to project management &mdash; a query that P6 and MS Project don't have built in.</p>
+
+<hr>
+
+<h2>Scenario 2: Greener Homes &mdash; Ontario Processing Platform</h2>
+
+<h3>The Platform</h3>
+
+<p>17 services across 6 deployment layers, processing residential EnerGuide audits at scale:</p>
+
+<div class="table-wrap">
+<table>
+  <tr><th>Layer</th><th>Services</th><th>What It Does</th></tr>
+  <tr><td>0 (External)</td><td>cwec-weather, nrcan-registry, ieso-grid-data</td><td>External data sources &mdash; weather, auditor credentials, grid emissions</td></tr>
+  <tr><td>1 (Data)</td><td>audit-database, h2k-filestore, utility-datamart</td><td>PostgreSQL, MinIO object storage, utility billing integration</td></tr>
+  <tr><td>2 (Compute)</td><td>hot2000-engine, ers-calculator, rebate-engine</td><td>Batch HOT2000 simulation, EnerGuide rating, rebate calculation</td></tr>
+  <tr><td>3 (Quality)</td><td>qa-validator, ghg-tracker, reporting-api</td><td>QA scoring, portfolio GHG tracking, REST API</td></tr>
+  <tr><td>4 (Presentation)</td><td>auditor-portal, program-dashboard, homeowner-portal</td><td>Web portals for advisors, executives, homeowners</td></tr>
+  <tr><td>5 (Operations)</td><td>backup-service, monitoring</td><td>Nightly backup, Zabbix monitoring</td></tr>
+</table>
+</div>
+
+<h3>What This Answers</h3>
+
+<h4>"The audit database is down &mdash; what's affected?"</h4>
+
+<ul>
+  <li><strong>11 of 17 services affected</strong> (65% of platform)</li>
+  <li><strong>Safe to continue:</strong> h2k-filestore, utility-datamart (they don't depend on the DB)</li>
+  <li><strong>Recovery sequence:</strong> bring up audit-database first, then compute layer, then quality, then portals</li>
+  <li>The audit database is the single most critical component &mdash; more downstream dependents than any other service</li>
+</ul>
+
+<h4>"What must be running before the auditor portal works?"</h4>
+
+<p>The dependency chain for the auditor portal traces back 4 hops:<br>
+<code>auditor-portal &rarr; reporting-api &rarr; audit-database &rarr; nrcan-registry</code></p>
+
+<p>Plus 11 total predecessor services (transitive). If any of those 11 are down, the portal is degraded.</p>
+
+<h4>"Which services have no redundancy?"</h4>
+
+<p>2 single points of failure: <strong>hot2000-engine</strong> (simulation cluster) and <strong>audit-database</strong> (PostgreSQL primary). Both have high downstream impact and no same-type peer at their layer.</p>
+
+<hr>
+
+<h2>The Interactive Explorer</h2>
+
+<p><a class="cta" href="https://rfam.cc/cjlq/">Open the Explorer &rarr;</a></p>
+
+<p>The interactive graph explorer renders both scenarios as layered or force-directed network diagrams:</p>
+
+<ul>
+  <li><strong>Tab switching:</strong> click NHCF or Greener Homes to switch scenarios</li>
+  <li><strong>Node selection:</strong> click any node to see its details &mdash; description, types, dependencies, dependents, and impact count</li>
+  <li><strong>Layer filtering:</strong> toolbar buttons toggle visibility by phase/layer</li>
+  <li><strong>Layout toggle:</strong> switch between layered (phases top-to-bottom) and force-directed (organic clustering)</li>
+  <li><strong>Deep linking:</strong> share a specific node &mdash; e.g., <a href="https://rfam.cc/cjlq/#nhcf/rideau-design">rfam.cc/cjlq/#nhcf/rideau-design</a></li>
+  <li><strong>Mobile-friendly:</strong> bottom sheet interface on phones, side panel on desktop</li>
+</ul>
+
+<p>All graph analytics are <strong>pre-computed</strong> and served as static JSON. The explorer is a pure renderer &mdash; no server, no database, no login required.</p>
+
+<hr>
+
+<h2>What's New Here (and What Isn't)</h2>
+
+<p>This system doesn't replace Primavera P6 or MS Project. It does something different. Here's an honest breakdown:</p>
+
+<div class="table-wrap">
+<table class="compare-table">
+  <tr><th>Capability</th><th>Spreadsheet</th><th>P6 / MS Project</th><th>This System</th></tr>
+  <tr>
+    <td>Schedule phasing (CPM)</td>
+    <td class="no">Manual</td>
+    <td class="yes">Yes &mdash; full CPM with resource leveling, lags, calendars, float</td>
+    <td class="partial">Simplified &mdash; FS only, no lags/calendars. Derived from structure.</td>
+  </tr>
+  <tr>
+    <td>Impact propagation ("if X fails, what breaks?")</td>
+    <td class="no">Manual tracing</td>
+    <td class="partial">Trace Logic &mdash; shows float impact, not full downstream set</td>
+    <td class="yes">Automatic transitive closure &mdash; full downstream failure set</td>
+  </tr>
+  <tr>
+    <td>Health status propagation</td>
+    <td class="no">Not possible</td>
+    <td class="no">Not built-in</td>
+    <td class="yes">Automatic &mdash; concept from infrastructure monitoring</td>
+  </tr>
+  <tr>
+    <td>Compliance checking</td>
+    <td class="partial">Formulas (can be overridden)</td>
+    <td class="no">Not built-in</td>
+    <td class="yes">Structural constraint &mdash; fails at schema level, can't be bypassed</td>
+  </tr>
+  <tr>
+    <td>Single point of failure detection</td>
+    <td class="no">Manual analysis</td>
+    <td class="no">Not built-in</td>
+    <td class="yes">Computed &mdash; no-redundancy + high-impact</td>
+  </tr>
+  <tr>
+    <td>Works for both project delivery <em>and</em> infrastructure topology</td>
+    <td class="no">Separate models</td>
+    <td class="no">PM only</td>
+    <td class="yes">Same engine, same patterns</td>
+  </tr>
+  <tr>
+    <td>Version-controlled, diffable, auditable</td>
+    <td class="partial">Limited</td>
+    <td class="no">Binary / database files</td>
+    <td class="yes">Plain text, git-tracked</td>
+  </tr>
+</table>
+</div>
+
+<div class="callout callout-green">
+  <strong>The core idea:</strong> The analytical queries &mdash; blast radius, health propagation, SPOF detection, structural compliance &mdash; are derived automatically from the dependency structure. The same engine that models a 4-building retrofit program also models a 17-service processing platform. When the data changes, every analysis recomputes. There is no report that gets out of sync with the plan.
+</div>
+
+<hr>
+
+<h2>Technical Notes</h2>
+
+<h3>Data Sources and Methodology</h3>
+
+<ul>
+  <li><strong>Climate data:</strong> Climate Atlas of Canada, CWEC2020 Typical Meteorological Year data for Ottawa Intl Airport (ASHRAE/NECB standard reference station for Zone 6)</li>
+  <li><strong>Carbon factors:</strong> Natural gas 49.88 kgCO2e/GJ per NRCan GHG Inventory; Ontario grid 74 gCO2e/kWh per IESO 2024 Annual Report</li>
+  <li><strong>Building code:</strong> OBC SB-12 (2024 edition) for Part 9 prescriptive; NECB 2020 for Part 3 performance</li>
+  <li><strong>Energy modelling tools:</strong> HOT2000 v11.10 for Part 9 (NRCan ERS protocol); eQUEST 3.65 for Part 3 (ASHRAE 90.1 Appendix G)</li>
+  <li><strong>NHCF requirements:</strong> National Housing Co-Investment Fund &mdash; Repair Stream (min 25% EUI reduction, min 25% GHG reduction, 20-year affordability covenant)</li>
+  <li><strong>Carbon pricing:</strong> $80/tCO2e, 2024 federal backstop rate</li>
+</ul>
+
+<h3>What This Is Built On</h3>
+
+<p>The system uses <a href="https://cuelang.org/">CUE</a>, a typed configuration language originally developed at Google for infrastructure management. The same graph patterns that model datacenter dependency networks are applied here to model program delivery and platform topology.</p>
+
+<p>The patterns are reusable: the graph engine computes depth, ancestors, and topology; the deployment planner generates phased execution sequences; the impact query traces failure propagation; and the SPOF detector finds nodes with no redundancy. These patterns work identically whether the nodes are work packages, services, containers, or any typed resource with dependencies.</p>
+
+</body>
+</html>
