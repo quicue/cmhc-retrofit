@@ -3,6 +3,7 @@
 
 # CUE local dependency resolution (symlinks to ~/quicue.ca)
 cue.mod/pkg/
+.kg/cue.mod/pkg/
 
 # NotebookLM upload material (ephemeral)
 notebooklm/
