@@ -1,4 +1,4 @@
-# cjlq — Infrastructure-as-Graph for CMHC Programs
+# cmhc-retrofit — Infrastructure-as-Graph for CMHC Programs
 
 **Audience:** Sustainability energy engineer doing project management
 at CMHC — someone who reviews NHCF funding applications, oversees
@@ -17,8 +17,8 @@ Requires [CUE](https://cuelang.org/) v0.15.3 and a local checkout of
 
 ```bash
 # Symlink the quicue.ca vocabulary (one-time)
-mkdir -p ~/cjlq/cue.mod/pkg
-ln -s ~/quicue.ca ~/cjlq/cue.mod/pkg/quicue.ca
+mkdir -p ~/cmhc-retrofit/cue.mod/pkg
+ln -s ~/quicue.ca ~/cmhc-retrofit/cue.mod/pkg/quicue.ca
 ```
 
 ## Quick Start
@@ -43,16 +43,16 @@ layer filtering, and impact analysis. Phone-friendly.
 
 ```bash
 # Build (exports JSON from CUE)
-bash ~/cjlq/build.sh
+bash ~/cmhc-retrofit/build.sh
 
 # Local preview
-python3 -m http.server -d ~/cjlq 8082
+python3 -m http.server -d ~/cmhc-retrofit8082
 # then open http://localhost:8082
 
-# Deep links (once deployed to rfam.cc)
-# https://rfam.cc/cjlq/#nhcf
-# https://rfam.cc/cjlq/#nhcf/rideau-design
-# https://rfam.cc/cjlq/#greener-homes/audit-database
+# Deep links (once deployed to quicue.ca)
+# https://quicue.ca/cmhc-retrofit/#nhcf
+# https://quicue.ca/cmhc-retrofit/#nhcf/rideau-design
+# https://quicue.ca/cmhc-retrofit/#greener-homes/audit-database
 ```
 
 ## Scenarios
@@ -183,16 +183,16 @@ All energy data uses real Ontario values:
 | Root nodes | NHCF agreement | 3 external data sources |
 | Leaf nodes | NHCF closeout | 5 terminal services |
 
-## Deploy Visual Explorer to rfam.cc
+## Deploy Visual Explorer to quicue.ca
 
 ```bash
-# Build and deploy (validates CUE, exports JSON, pushes to rfam.cc)
-bash ~/cjlq/deploy.sh
+# Build and deploy (validates CUE, exports JSON, pushes to quicue.ca)
+bash ~/cmhc-retrofit/deploy.sh
 ```
 
 Static files are pushed to container 612 (Caddy, `172.20.1.212`) via
-tulip, served at `/var/www/rfam.cc/cjlq/`. Caddy routing needs a path
-matcher for `/cjlq/*`. See `caddy-generator.cue` in grdn/jrdn.
+tulip, served at `/var/www/quicue.ca/cmhc-retrofit/`. Caddy routing needs a path
+matcher for `/cmhc-retrofit/*`. See `caddy-generator.cue` in grdn/jrdn.
 
 ## Dependencies
 

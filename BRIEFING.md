@@ -2,8 +2,8 @@
 
 **From:** quicue.ca demonstration project
 **Date:** February 2026
-**Visual explorer:** [rfam.cc/cjlq](https://rfam.cc/cjlq/)
-**This briefing:** [rfam.cc/cjlq/briefing.html](https://rfam.cc/cjlq/briefing.html)
+**Visual explorer:** [quicue.ca/cmhc-retrofit](https://quicue.ca/cmhc-retrofit/)
+**This briefing:** [quicue.ca/cmhc-retrofit/briefing.html](https://quicue.ca/cmhc-retrofit/briefing.html)
 
 ---
 
@@ -169,7 +169,7 @@ Plus 11 total predecessor services (transitive). If any of those 11 are down, th
 
 ## The Interactive Explorer
 
-**URL:** [rfam.cc/cjlq](https://rfam.cc/cjlq/)
+**URL:** [quicue.ca/cmhc-retrofit](https://quicue.ca/cmhc-retrofit/)
 
 The interactive graph explorer renders both scenarios as layered or force-directed network diagrams:
 
@@ -177,7 +177,7 @@ The interactive graph explorer renders both scenarios as layered or force-direct
 - **Node selection**: click any node to see its details — description, types, dependencies, dependents, and impact count
 - **Layer filtering**: toolbar buttons toggle visibility by phase/layer
 - **Layout toggle**: switch between layered (phases top-to-bottom) and force-directed (organic clustering)
-- **Deep linking**: share a specific node — e.g., `rfam.cc/cjlq/#nhcf/rideau-design`
+- **Deep linking**: share a specific node — e.g., `quicue.ca/cmhc-retrofit/#nhcf/rideau-design`
 - **Mobile-friendly**: bottom sheet interface on phones, side panel on desktop
 
 All graph analytics are **pre-computed** and served as static JSON. The explorer is a pure renderer — no server, no database, no login required.

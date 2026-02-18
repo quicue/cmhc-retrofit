@@ -1,4 +1,4 @@
-# NotebookLM Podcast Prompt — CJLQ Demo
+# NotebookLM Podcast Prompt — CMHC Retrofit Demo
 
 Upload this file plus the CUE source files as sources in NotebookLM,
 then use the prompt below to generate a podcast episode.
@@ -6,11 +6,11 @@ then use the prompt below to generate a podcast episode.
 ## Sources to Upload
 
 1. This file (`NOTEBOOKLM.md`)
-2. `~/cjlq/nhcf/portfolio.cue`
-3. `~/cjlq/nhcf/queries.cue`
-4. `~/cjlq/greener-homes/platform.cue`
-5. `~/cjlq/greener-homes/queries.cue`
-6. `~/cjlq/README.md`
+2. `~/cmhc-retrofit/nhcf/portfolio.cue`
+3. `~/cmhc-retrofit/nhcf/queries.cue`
+4. `~/cmhc-retrofit/greener-homes/platform.cue`
+5. `~/cmhc-retrofit/greener-homes/queries.cue`
+6. `~/cmhc-retrofit/README.md`
 
 ## Podcast Generation Prompt
 

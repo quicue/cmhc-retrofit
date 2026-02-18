@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Build CJLQ explorer — exports graph data from CUE and prepares static files
+# Build CMHC Retrofit explorer — exports graph data from CUE and prepares static files
 #
-# Usage: bash ~/cjlq/build.sh
+# Usage: bash ~/cmhc-retrofit/build.sh
 #
 # Prerequisites: cue v0.15.3, quicue.ca symlinked at cue.mod/pkg/quicue.ca
 
@@ -10,7 +10,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "=== CJLQ Explorer Build ==="
+echo "=== CMHC Retrofit Explorer Build ==="
 
 # Validate first
 echo "Validating NHCF..."

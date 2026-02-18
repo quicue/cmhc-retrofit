@@ -1,10 +1,10 @@
 // Knowledge graph index — comprehension-derived, never hand-maintained
-package kg
+package kb
 
 import "quicue.ca/kg/aggregate@v0"
 
 _index: aggregate.#KGIndex & {
-	project: "cjlq"
+	project: "cmhc-retrofit"
 
 	decisions: {}
 	insights:  {}

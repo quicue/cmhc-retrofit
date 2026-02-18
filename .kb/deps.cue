@@ -1,5 +1,5 @@
 // Dependency registry — patterns consumed from quicue.ca
-package kg
+package kb
 
 // pattern definitions consumed (from quicue.ca/patterns@v0)
 _pattern_deps: {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Build and deploy CJLQ explorer to rfam.cc
+# Build and deploy CMHC Retrofit explorer to quicue.ca
 #
-# Usage: bash ~/cjlq/deploy.sh
+# Usage: bash ~/cmhc-retrofit/deploy.sh
 #
 # Steps:
 #   1. Validates CUE schemas (nhcf + greener-homes)
@@ -19,16 +19,16 @@ bash "${SCRIPT_DIR}/build.sh"
 
 # Deploy to container 612 (Caddy) on tulip
 echo ""
-echo "Deploying to rfam.cc/cjlq/..."
+echo "Deploying to quicue.ca/cmhc-retrofit/..."
 for f in index.html briefing.html nhcf.json greener-homes.json nhcf-summary.json greener-homes-summary.json; do
-    tmp="/tmp/cjlq_${f}"
+    tmp="/tmp/cmhc-retrofit_${f}"
     ssh tulip "cat > ${tmp}" < "${SCRIPT_DIR}/${f}"
-    ssh tulip "pct push 612 ${tmp} /var/www/rfam.cc/cjlq/${f} && rm ${tmp}"
+    ssh tulip "pct push 612 ${tmp} /var/www/quicue.ca/cmhc-retrofit/${f} && rm ${tmp}"
     echo "  ${f} deployed"
 done
 
 echo ""
-echo "Live at https://rfam.cc/cjlq/"
-echo "  Briefing:      https://rfam.cc/cjlq/briefing.html"
-echo "  NHCF:          https://rfam.cc/cjlq/#nhcf"
-echo "  Greener Homes: https://rfam.cc/cjlq/#greener-homes"
+echo "Live at https://quicue.ca/cmhc-retrofit/"
+echo "  Briefing:      https://quicue.ca/cmhc-retrofit/briefing.html"
+echo "  NHCF:          https://quicue.ca/cmhc-retrofit/#nhcf"
+echo "  Greener Homes: https://quicue.ca/cmhc-retrofit/#greener-homes"
