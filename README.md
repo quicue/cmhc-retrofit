@@ -198,3 +198,10 @@ This repo imports vocabulary and patterns from
 [quicue.ca](https://github.com/quicue/quicue.ca) via CUE's module
 system. The local symlink at `cue.mod/pkg/quicue.ca` provides
 resolution — see `cue.mod/module.cue` for the dependency declaration.
+
+## See also
+
+- [quicue.ca](https://github.com/quicue/quicue.ca) — framework (patterns, providers, charter)
+- [demo.quicue.ca](https://demo.quicue.ca) — operator dashboard (datacenter example)
+- [docs.quicue.ca](https://docs.quicue.ca) — pattern documentation
+- [kg.quicue.ca](https://kg.quicue.ca) — knowledge graph spec
