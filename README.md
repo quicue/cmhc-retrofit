@@ -13,7 +13,7 @@ impact propagation — declaratively, with no code.
 ## Setup
 
 Requires [CUE](https://cuelang.org/) v0.15.3 and a local checkout of
-[quicue.ca](https://github.com/mthdn/quicue.ca).
+[quicue.ca](https://github.com/quicue/quicue.ca).
 
 ```bash
 # Symlink the quicue.ca vocabulary (one-time)
@@ -50,9 +50,9 @@ python3 -m http.server -d ~/cmhc-retrofit8082
 # then open http://localhost:8082
 
 # Deep links (once deployed to quicue.ca)
-# https://quicue.ca/cmhc-retrofit/#nhcf
-# https://quicue.ca/cmhc-retrofit/#nhcf/rideau-design
-# https://quicue.ca/cmhc-retrofit/#greener-homes/audit-database
+# https://cmhc-retrofit.quicue.ca/#nhcf
+# https://cmhc-retrofit.quicue.ca/#nhcf/rideau-design
+# https://cmhc-retrofit.quicue.ca/#greener-homes/audit-database
 ```
 
 ## Scenarios
@@ -183,20 +183,18 @@ All energy data uses real Ontario values:
 | Root nodes | NHCF agreement | 3 external data sources |
 | Leaf nodes | NHCF closeout | 5 terminal services |
 
-## Deploy Visual Explorer to quicue.ca
+## Deployment
 
 ```bash
-# Build and deploy (validates CUE, exports JSON, pushes to quicue.ca)
-bash ~/cmhc-retrofit/deploy.sh
+# Build and deploy (validates CUE, exports JSON, pushes to web server)
+DEPLOY_HOST=myhost DEPLOY_CT=612 bash ~/cmhc-retrofit/deploy.sh
 ```
 
-Static files are pushed to container 612 (Caddy, `172.20.1.212`) via
-tulip, served at `/var/www/quicue.ca/cmhc-retrofit/`. Caddy routing needs a path
-matcher for `/cmhc-retrofit/*`. See `caddy-generator.cue` in grdn/jrdn.
+The deploy script requires `DEPLOY_HOST` and `DEPLOY_CT` environment variables pointing to your Proxmox host and Caddy container. See `deploy.sh` for details.
 
 ## Dependencies
 
 This repo imports vocabulary and patterns from
-[quicue.ca](https://github.com/mthdn/quicue.ca) via CUE's module
+[quicue.ca](https://github.com/quicue/quicue.ca) via CUE's module
 system. The local symlink at `cue.mod/pkg/quicue.ca` provides
 resolution — see `cue.mod/module.cue` for the dependency declaration.

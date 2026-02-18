@@ -6,29 +6,36 @@
 # Steps:
 #   1. Validates CUE schemas (nhcf + greener-homes)
 #   2. Exports graph JSON
-#   3. Pushes static files to container 612 via tulip
+#   3. Pushes static files to the web server
 #
-# Prerequisites: SSH access to tulip (172.20.1.10)
+# Environment:
+#   DEPLOY_HOST    — SSH host for deployment (required)
+#   DEPLOY_CT      — container ID on the deploy host (required)
+#   DEPLOY_WEBROOT — web root path (default: /var/www/quicue.ca/cmhc-retrofit)
 
 set -euo pipefail
+
+: "${DEPLOY_HOST:?Set DEPLOY_HOST to the SSH hostname}"
+: "${DEPLOY_CT:?Set DEPLOY_CT to the container ID}"
+DEPLOY_WEBROOT="${DEPLOY_WEBROOT:-/var/www/quicue.ca/cmhc-retrofit}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Build (validates + exports JSON)
 bash "${SCRIPT_DIR}/build.sh"
 
-# Deploy to container 612 (Caddy) on tulip
+# Deploy static files
 echo ""
-echo "Deploying to quicue.ca/cmhc-retrofit/..."
+echo "Deploying to ${DEPLOY_HOST} ct${DEPLOY_CT}:${DEPLOY_WEBROOT}..."
 for f in index.html briefing.html nhcf.json greener-homes.json nhcf-summary.json greener-homes-summary.json; do
     tmp="/tmp/cmhc-retrofit_${f}"
-    ssh tulip "cat > ${tmp}" < "${SCRIPT_DIR}/${f}"
-    ssh tulip "pct push 612 ${tmp} /var/www/quicue.ca/cmhc-retrofit/${f} && rm ${tmp}"
+    ssh "${DEPLOY_HOST}" "cat > ${tmp}" < "${SCRIPT_DIR}/${f}"
+    ssh "${DEPLOY_HOST}" "pct push ${DEPLOY_CT} ${tmp} ${DEPLOY_WEBROOT}/${f} && rm ${tmp}"
     echo "  ${f} deployed"
 done
 
 echo ""
-echo "Live at https://quicue.ca/cmhc-retrofit/"
-echo "  Briefing:      https://quicue.ca/cmhc-retrofit/briefing.html"
-echo "  NHCF:          https://quicue.ca/cmhc-retrofit/#nhcf"
-echo "  Greener Homes: https://quicue.ca/cmhc-retrofit/#greener-homes"
+echo "Live at https://cmhc-retrofit.quicue.ca/"
+echo "  Briefing:      https://cmhc-retrofit.quicue.ca/briefing.html"
+echo "  NHCF:          https://cmhc-retrofit.quicue.ca/#nhcf"
+echo "  Greener Homes: https://cmhc-retrofit.quicue.ca/#greener-homes"
