@@ -192,6 +192,18 @@ DEPLOY_HOST=myhost DEPLOY_CT=612 bash ~/cmhc-retrofit/deploy.sh
 
 The deploy script requires `DEPLOY_HOST` and `DEPLOY_CT` environment variables pointing to your Proxmox host and Caddy container. See `deploy.sh` for details.
 
+## Foundation
+
+cmhc-retrofit is a domain instance in the quicue ecosystem:
+
+```
+apercue.ca          Generic graph patterns + W3C projections
+    └─ quicue.ca    Infrastructure-specific patterns (40+ types, 29 providers)
+        └─ cmhc-retrofit   This repo — construction PM graphs
+```
+
+The graph engine (`#InfraGraph`), charter system (`#Charter`, `#GapAnalysis`), impact analysis, and SPOF detection all come from the upstream layers. cmhc-retrofit adds domain-specific resources, energy parameters, and CMHC compliance checks on top.
+
 ## Dependencies
 
 This repo imports vocabulary and patterns from
@@ -201,7 +213,9 @@ resolution — see `cue.mod/module.cue` for the dependency declaration.
 
 ## See also
 
-- [quicue.ca](https://github.com/quicue/quicue.ca) — framework (patterns, providers, charter)
+- [apercue.ca](https://github.com/quicue/apercue) — generic foundation layer (domain-agnostic graphs + W3C projections)
+- [quicue.ca](https://github.com/quicue/quicue.ca) — infrastructure framework (patterns, providers, charter)
 - [demo.quicue.ca](https://demo.quicue.ca) — operator dashboard (datacenter example)
 - [docs.quicue.ca](https://docs.quicue.ca) — pattern documentation
-- [kg.quicue.ca](https://kg.quicue.ca) — knowledge graph spec
+- [kg.quicue.ca](https://kg.quicue.ca) — knowledge graph framework
+- [apercue.ca/explorer](https://apercue.ca/explorer.html) — ecosystem dependency graph
