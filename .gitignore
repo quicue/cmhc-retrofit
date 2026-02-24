@@ -7,3 +7,6 @@ cue.mod/pkg/
 
 # NotebookLM upload material (ephemeral)
 notebooklm/
+
+# Local tooling
+.claude/
