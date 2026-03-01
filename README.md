@@ -12,7 +12,7 @@ impact propagation — declaratively, with no code.
 
 ## Setup
 
-Requires [CUE](https://cuelang.org/) v0.15.3 and a local checkout of
+Requires [CUE](https://cuelang.org/) v0.15.4 and a local checkout of
 [quicue.ca](https://github.com/quicue/quicue.ca).
 
 ```bash

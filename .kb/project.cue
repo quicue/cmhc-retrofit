@@ -11,7 +11,7 @@ project: ext.#Context & {
 	repo:         "https://github.com/quicue/cmhc-retrofit"
 	license:      "Apache-2.0"
 	status:       "active"
-	cue_version:  "v0.15.3"
+	cue_version:  "v0.15.4"
 	uses: [
 		{"@id": "https://quicue.ca/pattern/struct-as-set"},
 		{"@id": "https://quicue.ca/pattern/three-layer"},

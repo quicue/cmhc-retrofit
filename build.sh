@@ -3,7 +3,7 @@
 #
 # Usage: bash ~/cmhc-retrofit/build.sh
 #
-# Prerequisites: cue v0.15.3, quicue.ca symlinked at cue.mod/pkg/quicue.ca
+# Prerequisites: cue v0.15.4, quicue.ca symlinked at cue.mod/pkg/quicue.ca
 
 set -euo pipefail
 
